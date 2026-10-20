@@ -1,0 +1,26 @@
+{
+  "name": "screensaver",
+  "version": "0.1.0",
+  "description": "/screensaver covers this terminal with the dev-null.sh logo until Esc",
+  "userConfig": {
+    "commands": {
+      "type": "string",
+      "title": "Command names",
+      "description": "Slash commands that start the screensaver, separated by commas or spaces (e.g. screensaver, ss, afk)",
+      "default": "screensaver"
+    }
+  },
+  "author": {
+    "name": "younes-io",
+    "url": "https://github.com/younes-io"
+  },
+  "homepage": "https://github.com/younes-io/devnull",
+  "repository": "https://github.com/younes-io/devnull",
+  "license": "MIT",
+  "keywords": [
+    "screensaver",
+    "dev-null",
+    "hyprland",
+    "ghostty"
+  ]
+}

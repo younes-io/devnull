@@ -1,0 +1,15 @@
+{
+  "name": "devnull",
+  "owner": {
+    "name": "younes-io",
+    "url": "https://github.com/younes-io"
+  },
+  "plugins": [
+    {
+      "name": "screensaver",
+      "source": "./plugins/screensaver",
+      "description": "/screensaver covers this terminal with the dev-null.sh logo until Esc"
+    }
+  ],
+  "description": "dev-null.sh things for Claude Code"
+}

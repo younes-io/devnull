@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+# Opens the screensaver in a borderless, opaque floating Ghostty window laid exactly
+# over the terminal window this Claude session runs in.
+set -euo pipefail
+
+root=$(cd "$(dirname "$0")/.." && pwd)
+clients=$(hyprctl clients -j)
+
+# Walk up from this process to the first ancestor that owns a window: the hosting terminal.
+address=
+pid=$$
+while [ "$pid" -gt 1 ] && [ -z "$address" ]; do
+  address=$(jq -r --argjson pid "$pid" 'map(select(.pid == $pid))[0].address // empty' <<<"$clients")
+  pid=$(ps -o ppid= -p "$pid" | tr -d ' ')
+done
+[ -n "$address" ] || address=$(hyprctl activewindow -j | jq -r .address)
+
+# Window rules place windows relative to their monitor, so subtract the monitor's origin.
+read -r x y w h workspace < <(jq -r --arg address "$address" --argjson monitors "$(hyprctl monitors -j)" '
+  map(select(.address == $address))[0] as $c | ($monitors | map(select(.id == $c.monitor))[0]) as $m
+  | "\($c.at[0] - $m.x) \($c.at[1] - $m.y) \($c.size[0]) \($c.size[1]) \($c.workspace.id)"' <<<"$clients")
+# The screensaver opens on the terminal's workspace, and takes focus only when that is where you are.
+[ "$workspace" = "$(hyprctl activeworkspace -j | jq -r .id)" ] || workspace="$workspace silent"
+# One extra logical pixel per side: at fractional scales the edges round onto half pixels.
+x=$((x - 1)) y=$((y - 1)) w=$((w + 2)) h=$((h + 2))
+
+# A named rule: each launch updates the previous one instead of stacking rules. Re-registering
+# merges fields, so every field is spelled out (pin = false keeps it on its own workspace).
+hyprctl eval "hl.window_rule({ name = 'devnull-screensaver', match = { class = '^sh.devnull.screensaver\$' },
+  tag = '-default-opacity', workspace = '$workspace', float = true, pin = false, move = { $x, $y }, size = { $w, $h },
+  border_size = 0, rounding = 0, no_anim = true, no_dim = true, no_blur = true, opacity = '1 1' })" >/dev/null
+
+hyprctl dispatch "hl.dsp.exec_cmd([[ghostty --class=sh.devnull.screensaver --confirm-close-surface=false --background-opacity=1 --window-padding-x=0 --window-padding-y=0 -e /usr/bin/python3 -I '$root/bin/screensaver.py' $address]])" >/dev/null
